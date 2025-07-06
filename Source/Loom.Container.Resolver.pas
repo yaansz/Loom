@@ -242,9 +242,36 @@ var
   RttiType  : TRttiType;
   Prop      : TRttiProperty;
   PropValue : TObject;
+  PropIntf  : IInterface;
+  ValueIntf : TValue;
   Attr      : TCustomAttribute;
+  Field     : TRttiField;
+  Autowired : AutowiredAttribute;
 begin
   RttiType := FContext.GetType(Instance.ClassType);
+
+  for Field in RttiType.GetFields do
+  begin
+    Autowired := Field.GetAttribute<AutowiredAttribute>;
+
+    if Assigned(Autowired) then
+      begin
+        if Field.FieldType.IsInstance then
+          begin
+            PropValue := Resolve(Field.FieldType.AsInstance.MetaclassType);
+            Field.SetValue(Instance, TValue.From<TObject>(PropValue));
+          end
+        else if Field.FieldType.TypeKind = tkInterface then
+          begin
+            PropIntf := ResolveInterface(TRttiInterfaceType(Field.FieldType).GUID);
+            TValue.Make(@PropIntf, Field.FieldType.Handle, ValueIntf);
+
+            Field.SetValue(Instance, ValueIntf);
+          end
+        else
+          raise EContainerResolveException.CreateFmt('Autowired property must be class type: %s.%s', [Instance.ClassName, Prop.Name]);
+      end;
+  end;
 
   for Prop in RttiType.GetProperties do
   begin
@@ -256,6 +283,13 @@ begin
           begin
             PropValue := Resolve(Prop.PropertyType.AsInstance.MetaclassType);
             Prop.SetValue(Instance, TValue.From<TObject>(PropValue));
+          end
+        else if Prop.PropertyType.TypeKind = tkInterface then
+          begin
+            PropIntf := ResolveInterface(TRttiInterfaceType(Prop.PropertyType).GUID);
+            TValue.Make(@PropIntf, Field.FieldType.Handle, ValueIntf);
+
+            Prop.SetValue(Instance, ValueIntf);
           end
         else
           raise EContainerResolveException.CreateFmt('Autowired property must be class type: %s.%s', [Instance.ClassName, Prop.Name]);

@@ -43,6 +43,15 @@ type
     property Weapon: IWeapon read FWeapon;
   end;
 
+  [Component]
+  TArcher = class
+  private
+    FWeapon: IWeapon;
+  public
+    [Autowired]
+    property Weapon: IWeapon read FWeapon write FWeapon;
+  end;
+
   TCustomWarrior = class
   private
     FWeapon: IWeapon;
@@ -96,6 +105,9 @@ type
 
     [Test]
     procedure Test_RegisterComponent_ResolvesClass;
+
+    [Test]
+    procedure Test_RegisterComponent_AutowiredInterface;
 
     [Test]
     procedure Test_RegisterType_WithFactory;
@@ -214,6 +226,17 @@ begin
   Assert.IsNotNull(Warrior, 'Warrior should be resolved');
   Assert.IsTrue(Warrior is TWarrior, 'Resolved instance should be TWarrior');
   Assert.AreEqual(10, TWarrior(Warrior).Weapon.Damage, 'Weapon damage should be 10');
+end;
+
+procedure TLoomContainerTests.Test_RegisterComponent_AutowiredInterface;
+begin
+  FContainer.RegisterComponent(TArcher);
+  FContainer.RegisterInterface(IWeapon, TShuriken);
+
+  var Archer : TArcher := FContainer.Resolve<TArcher>;
+  Assert.IsNotNull(Archer, 'Archer should be resolved');
+  Assert.IsTrue(Archer is TArcher, 'Resolved instance should be TArcher');
+  Assert.AreEqual(5, Archer.Weapon.Damage, 'Weapon damage should be 5');
 end;
 
 procedure TLoomContainerTests.Test_RegisterType_WithFactory;

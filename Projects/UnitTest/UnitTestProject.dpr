@@ -21,7 +21,8 @@ uses
   Loom.Container.Resolver in '..\..\Source\Loom.Container.Resolver.pas',
   Loom.Container.Tests in 'Loom.Container.Tests.pas',
   Loom.Container.AutoRegister.Tests in 'Loom.Container.AutoRegister.Tests.pas',
-  Loom.Container.AutoRegister.Classes in 'Loom.Container.AutoRegister.Classes.pas';
+  Loom.Container.AutoRegister.Classes in 'Loom.Container.AutoRegister.Classes.pas',
+  Loom.Container.Injection.Test in 'Loom.Container.Injection.Test.pas';
 
 { keep comment here to protect the following conditional from being removed by the IDE when adding a unit }
 {$IFNDEF TESTINSIGHT}
