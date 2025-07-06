@@ -7,7 +7,8 @@ uses
   System.TypInfo,
   System.SysUtils,
   System.Generics.Collections,
-  Loom.Container.Registry;
+  Loom.Container.Registry,
+  Loom.Container.Injector;
 
 type
   ECircularDependencyError = class(Exception);
@@ -21,6 +22,7 @@ type
     FResolvingStack : TStack<TClass>;
     FResolvingSet   : TDictionary<TClass, Boolean>;
     FContext        : TRttiContext;
+    FInjector       : TPropertyInjector;
 
     function  CreateInstanceWithAutowiring(AClass: TClass): TObject;
     function  ResolveConstructorParameters(AClass: TClass; ConstructorMethod: TRttiMethod): TArray<TObject>;
@@ -50,6 +52,7 @@ begin
   FResolvingStack := TStack<TClass>.Create;
   FResolvingSet   := TDictionary<TClass, Boolean>.Create;
   FNonInterfaced  := TObjectDictionary<TClass, TObject>.Create([doOwnsValues]);
+  FInjector       := TPropertyInjector.Create(Resolve, ResolveInterface, FContext);
 end;
 
 destructor TContainerResolver.Destroy;
@@ -58,6 +61,7 @@ begin
   FResolvingStack.Free;
   FSingletons.Free;
   FNonInterfaced.Free;
+  FInjector.Free;
   FContext.Free;
   inherited;
 end;
@@ -238,65 +242,8 @@ begin
 end;
 
 procedure TContainerResolver.InjectProperties(Instance: TObject);
-var
-  RttiType  : TRttiType;
-  Prop      : TRttiProperty;
-  PropValue : TObject;
-  PropIntf  : IInterface;
-  ValueIntf : TValue;
-  Attr      : TCustomAttribute;
-  Field     : TRttiField;
-  Autowired : AutowiredAttribute;
 begin
-  RttiType := FContext.GetType(Instance.ClassType);
-
-  for Field in RttiType.GetFields do
-  begin
-    Autowired := Field.GetAttribute<AutowiredAttribute>;
-
-    if Assigned(Autowired) then
-      begin
-        if Field.FieldType.IsInstance then
-          begin
-            PropValue := Resolve(Field.FieldType.AsInstance.MetaclassType);
-            Field.SetValue(Instance, TValue.From<TObject>(PropValue));
-          end
-        else if Field.FieldType.TypeKind = tkInterface then
-          begin
-            PropIntf := ResolveInterface(TRttiInterfaceType(Field.FieldType).GUID);
-            TValue.Make(@PropIntf, Field.FieldType.Handle, ValueIntf);
-
-            Field.SetValue(Instance, ValueIntf);
-          end
-        else
-          raise EContainerResolveException.CreateFmt('Autowired property must be class type: %s.%s', [Instance.ClassName, Prop.Name]);
-      end;
-  end;
-
-  for Prop in RttiType.GetProperties do
-  begin
-    for Attr in Prop.GetAttributes do
-    begin
-      if Attr is AutowiredAttribute then
-      begin
-        if Prop.PropertyType.IsInstance then
-          begin
-            PropValue := Resolve(Prop.PropertyType.AsInstance.MetaclassType);
-            Prop.SetValue(Instance, TValue.From<TObject>(PropValue));
-          end
-        else if Prop.PropertyType.TypeKind = tkInterface then
-          begin
-            PropIntf := ResolveInterface(TRttiInterfaceType(Prop.PropertyType).GUID);
-            TValue.Make(@PropIntf, Field.FieldType.Handle, ValueIntf);
-
-            Prop.SetValue(Instance, ValueIntf);
-          end
-        else
-          raise EContainerResolveException.CreateFmt('Autowired property must be class type: %s.%s', [Instance.ClassName, Prop.Name]);
-      end;
-    end;
-  end;
+  FInjector.Inject(Instance);
 end;
-
 
 end.

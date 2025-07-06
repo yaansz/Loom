@@ -14,7 +14,8 @@ uses
   Loom.Container.Registry in '..\..\..\Source\Loom.Container.Registry.pas',
   Loom.Container.Resolver in '..\..\..\Source\Loom.Container.Resolver.pas',
   Loom.Container.DataTypes in '..\..\..\Source\Loom.Container.DataTypes.pas',
-  Example.Medium.Main in 'Example.Medium.Main.pas';
+  Example.Medium.Main in 'Example.Medium.Main.pas',
+  Loom.Container.Injector in '..\..\..\Source\Loom.Container.Injector.pas';
 
 var
   Container: LoomContainer;

@@ -39,6 +39,22 @@ type
     FFieldService: TTestService;  // Field injection of class
     FFieldIntf: ITestService;     // Field injection of interface
 
+    procedure SetFieldService(const New : TTestService);
+    procedure SetFieldIntf(const New : ITestService);
+
+  public
+    [Autowired]
+    property FieldService : TTestService read FFieldService write FFieldService;
+
+    [Autowired]
+    property FieldIntf    : ITestService read FFieldIntf write FFieldIntf;
+  end;
+
+  TTestPropertyMethodInjectComponent = class
+  private
+    FFieldService: TTestService;  // Field injection of class
+    FFieldIntf: ITestService;     // Field injection of interface
+
   public
     [Autowired]
     property FieldService : TTestService read FFieldService write FFieldService;
@@ -85,7 +101,14 @@ type
     procedure TestPropertyInjection_Interface;
 
     [Test]
+    procedure TestMethodInjection_Class;
+
+    [Test]
+    procedure TestMethodInjection_Interface;
+
+    [Test]
     procedure TestCircularDependencyDetection;
+
   end;
 
 implementation
@@ -97,6 +120,18 @@ begin
   Result := 'TTestService';
 end;
 
+{ TTestPropertyInjectComponent }
+
+procedure TTestPropertyInjectComponent.SetFieldIntf(const New: ITestService);
+begin
+  FFieldIntf := New;
+end;
+
+procedure TTestPropertyInjectComponent.SetFieldService(const New: TTestService);
+begin
+  FFieldService := New;
+end;
+
 { TestTContainerResolver }
 
 procedure TestContainerResolver.Setup;
@@ -105,6 +140,7 @@ begin
   FRegistry.RegisterComponent(TTestService, TScope.Singleton);
   FRegistry.RegisterComponent(TTestFieldInjectComponent, TScope.Prototype);
   FRegistry.RegisterComponent(TTestPropertyInjectComponent, TScope.Prototype);
+  FRegistry.RegisterComponent(TTestPropertyMethodInjectComponent, TScope.Prototype);
   FRegistry.RegisterInterface(ITestService, TTestService, TScope.Singleton);
   FResolver := TContainerResolver.Create(FRegistry);
 end;
@@ -141,7 +177,32 @@ begin
   end;
 end;
 
-[Test]
+procedure TestContainerResolver.TestMethodInjection_Class;
+var
+  Component: TTestPropertyMethodInjectComponent;
+begin
+  Component := FResolver.Resolve(TTestPropertyMethodInjectComponent) as TTestPropertyMethodInjectComponent;
+  try
+    Assert.IsNotNull(Component.FieldService, 'Field service (class) not injected');
+    Assert.IsTrue(Component.FieldService is TTestService, 'Incorrect type for field service');
+  finally
+    Component.Free;
+  end;
+end;
+
+procedure TestContainerResolver.TestMethodInjection_Interface;
+var
+  Component: TTestPropertyMethodInjectComponent;
+begin
+  Component := FResolver.Resolve(TTestPropertyMethodInjectComponent) as TTestPropertyMethodInjectComponent;
+  try
+    Assert.IsNotNull(Component.FieldIntf, 'Field service (class) not injected');
+    Assert.IsTrue(Supports(Component.FieldIntf, ITestService), 'Incorrect type for field service');
+  finally
+    Component.Free;
+  end;
+end;
+
 procedure TestContainerResolver.TestPropertyInjection_Class;
 var
   Component: TTestPropertyInjectComponent;
@@ -155,7 +216,6 @@ begin
   end;
 end;
 
-[Test]
 procedure TestContainerResolver.TestPropertyInjection_Interface;
 var
   Component: TTestPropertyInjectComponent;
