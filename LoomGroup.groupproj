@@ -1,0 +1,84 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{4D56CFBB-74E9-43EF-A389-3EC38DBBC2D1}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="Projects\Loom\Loom.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Projects\Examples\Simple\SimpleProject.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Projects\Examples\Medium\MediumProject.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Projects\Examples\Complex\ComplexProject.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Projects\UnitTest\UnitTestProject.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="Loom">
+        <MSBuild Projects="Projects\Loom\Loom.dproj"/>
+    </Target>
+    <Target Name="Loom:Clean">
+        <MSBuild Projects="Projects\Loom\Loom.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Loom:Make">
+        <MSBuild Projects="Projects\Loom\Loom.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="SimpleProject">
+        <MSBuild Projects="Projects\Examples\Simple\SimpleProject.dproj"/>
+    </Target>
+    <Target Name="SimpleProject:Clean">
+        <MSBuild Projects="Projects\Examples\Simple\SimpleProject.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="SimpleProject:Make">
+        <MSBuild Projects="Projects\Examples\Simple\SimpleProject.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MediumProject">
+        <MSBuild Projects="Projects\Examples\Medium\MediumProject.dproj"/>
+    </Target>
+    <Target Name="MediumProject:Clean">
+        <MSBuild Projects="Projects\Examples\Medium\MediumProject.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MediumProject:Make">
+        <MSBuild Projects="Projects\Examples\Medium\MediumProject.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="ComplexProject">
+        <MSBuild Projects="Projects\Examples\Complex\ComplexProject.dproj"/>
+    </Target>
+    <Target Name="ComplexProject:Clean">
+        <MSBuild Projects="Projects\Examples\Complex\ComplexProject.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="ComplexProject:Make">
+        <MSBuild Projects="Projects\Examples\Complex\ComplexProject.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="UnitTestProject">
+        <MSBuild Projects="Projects\UnitTest\UnitTestProject.dproj"/>
+    </Target>
+    <Target Name="UnitTestProject:Clean">
+        <MSBuild Projects="Projects\UnitTest\UnitTestProject.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="UnitTestProject:Make">
+        <MSBuild Projects="Projects\UnitTest\UnitTestProject.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="Loom;SimpleProject;MediumProject;ComplexProject;UnitTestProject"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="Loom:Clean;SimpleProject:Clean;MediumProject:Clean;ComplexProject:Clean;UnitTestProject:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="Loom:Make;SimpleProject:Make;MediumProject:Make;ComplexProject:Make;UnitTestProject:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
