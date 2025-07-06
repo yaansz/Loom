@@ -6,6 +6,9 @@ uses
   Loom.Container.DataTypes;
 
 type
+  QualifierAttribute = class(TCustomAttribute)
+  end;
+
   ComponentAttribute = class(TCustomAttribute)
   private
     FScope: TScope;

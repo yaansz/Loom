@@ -6,14 +6,16 @@ uses
   System.Rtti,
   System.SysUtils,
   System.Generics.Collections,
+  Loom.Attributes,
   Loom.Container.DataTypes;
 
 type
   TComponentRegistration = record
-    Factory: TFunc<TObject>;
-    Scope: TScope;
-    UseAutowire: Boolean;
-    ImplementedInterfaces: TArray<TGUID>;
+    Factory               : TFunc<TObject>;
+    Scope                 : TScope;
+    UseAutowire           : Boolean;
+    ImplementedInterfaces : TArray<TGUID>;
+    Qualifiers            : TArray<QualifierAttribute>;
   end;
 
   TContainerRegistry = class
@@ -21,9 +23,11 @@ type
     FClassRegistry     : TDictionary<TClass, TComponentRegistration>;
     FInterfaceRegistry : TDictionary<string, TClass>;
     FContext           : TRttiContext;
+    Qualifiers         : TArray<QualifierAttribute>;
 
     procedure RegisterImplementedInterfaces(AClass: TClass; ImplementedInterfaces: TArray<TGUID>);
     function ClassImplementsInterface(AClass: TClass; const IID: TGUID): Boolean;
+    function GetQualifiers(AClass : TClass) : TArray<QualifierAttribute>;
 
     procedure AutoRegisterType(AType: TRttiType);
   public
@@ -45,8 +49,7 @@ type
 implementation
 
 uses
-  System.Masks,
-  Loom.Attributes;
+  System.Masks;
 
 { TContainerRegistry }
 
@@ -106,6 +109,22 @@ begin
   FClassRegistry.AddOrSetValue(AClass, Reg);
 end;
 
+function TContainerRegistry.GetQualifiers(AClass : TClass) : TArray<QualifierAttribute>;
+begin
+  Result := [];
+
+  var RttiType := FContext.GetType(AClass);
+
+  for var Attr in RttiType.GetAttributes do
+  begin
+    if Attr is QualifierAttribute then
+    begin
+      SetLength(Result, Length(Result) + 1);
+      Result[High(Result)] := QualifierAttribute(Attr);
+    end;
+  end;
+end;
+
 procedure TContainerRegistry.RegisterComponent(AClass: TClass; Scope: TScope);
 var
   Reg         : TComponentRegistration;
@@ -135,10 +154,11 @@ begin
     end;
   end;
 
-  Reg.Factory := nil;
-  Reg.Scope := Scope;
-  Reg.UseAutowire := True;
+  Reg.Factory               := nil;
+  Reg.Scope                 := Scope;
+  Reg.UseAutowire           := True;
   Reg.ImplementedInterfaces := Implemented;
+  Reg.Qualifiers            := GetQualifiers(AClass);
   FClassRegistry.AddOrSetValue(AClass, Reg);
 
   RegisterImplementedInterfaces(AClass, Implemented);
