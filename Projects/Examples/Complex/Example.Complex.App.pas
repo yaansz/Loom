@@ -27,10 +27,9 @@ uses
 
 { TApp }
 
-constructor TApp.Create(Config: IConfig; AuthService: IAuthService;
-  DataService: IDataService);
+constructor TApp.Create(Config: IConfig; AuthService: IAuthService; DataService: IDataService);
 begin
-  FConfig := Config;
+  FConfig      := Config;
   FAuthService := AuthService;
   FDataService := DataService;
 end;

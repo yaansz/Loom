@@ -28,14 +28,14 @@ type
     procedure RegisterComponent(AClass: TClass; Scope: TScope = TScope.Singleton);
 
     // Interface registration
-    procedure RegisterInterface(const IID: TGUID; AClass: TClass; Scope: TScope = TScope.Singleton; const Name: string = '');
-    procedure RegisterInterfaceWithClass(const IID: TGUID; AClass: TClass; Scope: TScope = TScope.Singleton; const Name: string = '');
+    procedure RegisterInterface(const IID: TGUID; AClass: TClass; Scope: TScope = TScope.Singleton);
+    procedure RegisterInterfaceWithClass(const IID: TGUID; AClass: TClass; Scope: TScope = TScope.Singleton);
 
     // Resolution methods
     function Resolve<T: class>: T; overload;
     function Resolve(AClass: TClass): TObject; overload;
-    function ResolveInterface(const IID: TGUID; const Name: string = ''): IInterface; overload;
-    function ResolveInterface<T: IInterface>(const Name: string = ''): T; overload;
+    function ResolveInterface(const IID: TGUID): IInterface; overload;
+    function ResolveInterface<T: IInterface> : T; overload;
 
     // Auto Register
     procedure AutoRegister(const UnitPattern: string);
@@ -78,15 +78,14 @@ begin
   FRegistry.RegisterComponent(AClass, Scope);
 end;
 
-procedure LoomContainer.RegisterInterface(const IID: TGUID; AClass: TClass;
-  Scope: TScope; const Name: string);
+procedure LoomContainer.RegisterInterface(const IID: TGUID; AClass: TClass; Scope: TScope);
 begin
-  FRegistry.RegisterInterface(IID, AClass, Scope, Name);
+  FRegistry.RegisterInterface(IID, AClass, Scope);
 end;
 
-procedure LoomContainer.RegisterInterfaceWithClass(const IID: TGUID; AClass: TClass; Scope: TScope; const Name: string);
+procedure LoomContainer.RegisterInterfaceWithClass(const IID: TGUID; AClass: TClass; Scope: TScope);
 begin
-  FRegistry.RegisterInterface(IID, AClass, Scope, Name);
+  FRegistry.RegisterInterface(IID, AClass, Scope);
 end;
 
 function LoomContainer.Resolve(AClass: TClass): TObject;
@@ -99,18 +98,18 @@ begin
   Result := T(FResolver.Resolve(TClass(T)));
 end;
 
-function LoomContainer.ResolveInterface(const IID: TGUID; const Name: string): IInterface;
+function LoomContainer.ResolveInterface(const IID: TGUID): IInterface;
 begin
-  Result := FResolver.ResolveInterface(IID, Name);
+  Result := FResolver.ResolveInterface(IID);
 end;
 
-function LoomContainer.ResolveInterface<T>(const Name: string): T;
+function LoomContainer.ResolveInterface<T> : T;
 var
   IID        : TGUID;
   IntfResult : IInterface;
 begin
   IID := GetTypeData(TypeInfo(T))^.Guid;
-  IntfResult := FResolver.ResolveInterface(IID, Name);
+  IntfResult := FResolver.ResolveInterface(IID);
   Supports(IntfResult, IID, Result);
 end;
 

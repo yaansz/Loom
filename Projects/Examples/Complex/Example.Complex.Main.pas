@@ -30,8 +30,6 @@ begin
 
     App := Container.Resolve<TApp>;
     App.Run;
-
-    App.Free;
   finally
     Container.Free;
   end;

@@ -30,11 +30,11 @@ type
     constructor Create;
     destructor Destroy; override;
 
-    function CreateKey(const IID: TGUID; const Name: string): string;
+    function CreateKey(const IID: TGUID): string;
 
     procedure RegisterType(AClass: TClass; AFactory: TFunc<TObject>; Scope: TScope);
     procedure RegisterComponent(AClass: TClass; Scope: TScope);
-    procedure RegisterInterface(const IID: TGUID; AClass: TClass; Scope: TScope; const Name: string = '');
+    procedure RegisterInterface(const IID: TGUID; AClass: TClass; Scope: TScope);
 
     procedure AutoRegister(const UnitPattern: string);
 
@@ -86,9 +86,9 @@ begin
     Result := False;
 end;
 
-function TContainerRegistry.CreateKey(const IID: TGUID; const Name: string): string;
+function TContainerRegistry.CreateKey(const IID: TGUID): string;
 begin
-  Result := GUIDToString(IID) + '|' + Name;
+  Result := GUIDToString(IID);
 end;
 
 procedure TContainerRegistry.RegisterType(AClass: TClass;
@@ -144,8 +144,7 @@ begin
   RegisterImplementedInterfaces(AClass, Implemented);
 end;
 
-procedure TContainerRegistry.RegisterInterface(const IID: TGUID;
-  AClass: TClass; Scope: TScope; const Name: string = '');
+procedure TContainerRegistry.RegisterInterface(const IID: TGUID; AClass: TClass; Scope: TScope);
 begin
   // Validate interface implementation
   if not ClassImplementsInterface(AClass, IID) then
@@ -157,16 +156,15 @@ begin
   if not FClassRegistry.ContainsKey(AClass) then
     RegisterComponent(AClass, Scope);
 
-  FInterfaceRegistry.AddOrSetValue(CreateKey(IID, Name), AClass);
+  FInterfaceRegistry.AddOrSetValue(CreateKey(IID), AClass);
 end;
 
-procedure TContainerRegistry.RegisterImplementedInterfaces(AClass: TClass;
-  ImplementedInterfaces: TArray<TGUID>);
+procedure TContainerRegistry.RegisterImplementedInterfaces(AClass: TClass; ImplementedInterfaces: TArray<TGUID>);
 var
   IID: TGUID;
 begin
   for IID in ImplementedInterfaces do
-    RegisterInterface(IID, AClass, Singleton, '');
+    RegisterInterface(IID, AClass, Singleton);
 end;
 
 procedure TContainerRegistry.AutoRegisterType(AType: TRttiType);

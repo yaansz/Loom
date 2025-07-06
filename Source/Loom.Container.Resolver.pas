@@ -33,7 +33,7 @@ type
     destructor Destroy; override;
 
     function Resolve(AClass: TClass): TObject;
-    function ResolveInterface(const IID: TGUID; const Name: string = ''): IInterface;
+    function ResolveInterface(const IID: TGUID): IInterface;
   end;
 
 implementation
@@ -114,17 +114,17 @@ begin
   end;
 end;
 
-function TContainerResolver.ResolveInterface(const IID: TGUID; const Name: string = ''): IInterface;
+function TContainerResolver.ResolveInterface(const IID: TGUID): IInterface;
 var
   Key      : string;
   AClass   : TClass;
   Instance : TObject;
 begin
-  Key := FRegistry.CreateKey(IID, Name);
+  Key := FRegistry.CreateKey(IID);
 
   if not FRegistry.InterfaceRegistry.TryGetValue(Key, AClass) then
-    raise EContainerResolveException.CreateFmt('Interface not registered: %s [%s]',
-      [GUIDToString(IID), Name]);
+    raise EContainerResolveException.CreateFmt('Interface not registered: %s',
+      [GUIDToString(IID)]);
 
   Instance := Resolve(AClass);
 
@@ -227,7 +227,7 @@ begin
       // Interface dependency
       InterfaceGUID := TRttiInterfaceType(ParamType).GUID;
 
-      if not FRegistry.InterfaceRegistry.TryGetValue(FRegistry.CreateKey(InterfaceGUID, ''), ImplementerClass) then
+      if not FRegistry.InterfaceRegistry.TryGetValue(FRegistry.CreateKey(InterfaceGUID), ImplementerClass) then
         raise EContainerResolveException.CreateFmt('No implementation registered for interface %s',
           [GUIDToString(InterfaceGUID)]);
 

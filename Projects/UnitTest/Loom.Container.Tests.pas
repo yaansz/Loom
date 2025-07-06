@@ -116,9 +116,6 @@ type
     procedure Test_InterfaceResolution_ManualRegistration;
 
     [Test]
-    procedure Test_NamedInterfaceResolution;
-
-    [Test]
     procedure Test_SingletonScope;
 
     [Test]
@@ -261,18 +258,6 @@ begin
   var Warrior := FContainer.Resolve(TCustomWarrior);
   Assert.AreEqual(10, TCustomWarrior(Warrior).Weapon.Damage, 'Weapon damage should be 10');
   Assert.AreEqual(15, TCustomWarrior(Warrior).Shield.Defense, 'Shield defense should be 15');
-end;
-
-procedure TLoomContainerTests.Test_NamedInterfaceResolution;
-begin
-  FContainer.RegisterInterface(IWeapon, TSword, TScope.Singleton, 'Sword');
-  FContainer.RegisterInterface(IWeapon, TShuriken, TScope.Singleton, 'Shuriken');
-
-  var Sword := FContainer.ResolveInterface<IWeapon>('Sword');
-  var Shuriken := FContainer.ResolveInterface<IWeapon>('Shuriken');
-
-  Assert.AreEqual(10, Sword.Damage, 'Sword damage should be 10');
-  Assert.AreEqual(5, Shuriken.Damage, 'Shuriken damage should be 5');
 end;
 
 procedure TLoomContainerTests.Test_SingletonScope;

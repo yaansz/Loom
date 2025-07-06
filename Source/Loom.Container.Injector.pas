@@ -12,7 +12,7 @@ type
   EContainerInvalidAutowire = class(Exception);
 
   TClassResolver = reference to function(AClass: TClass): TObject;
-  TIntfResolver  = reference to function(const IID: TGUID; const Name: string = ''): IInterface;
+  TIntfResolver  = reference to function(const IID: TGUID): IInterface;
 
   TPropertyInjector = class
   private
@@ -61,11 +61,9 @@ begin
   end;
 end;
 
-procedure TPropertyInjector.InjectProperties(Instance: TObject;
-  RttiType: TRttiType);
+procedure TPropertyInjector.InjectProperties(Instance: TObject; RttiType: TRttiType);
 var
   Prop: TRttiProperty;
-  Attr: TCustomAttribute;
 begin
   for Prop in RttiType.GetProperties do
   begin
@@ -88,7 +86,7 @@ begin
   end
   else if Field.FieldType.TypeKind = tkInterface then
   begin
-    PropIntf := FResolveIntf(TRttiInterfaceType(Field.FieldType).GUID, '');
+    PropIntf := FResolveIntf(TRttiInterfaceType(Field.FieldType).GUID);
     TValue.Make(@PropIntf, Field.FieldType.Handle, ValueIntf);
     Field.SetValue(Instance, ValueIntf);
   end
@@ -112,7 +110,7 @@ begin
   end
   else if Prop.PropertyType.TypeKind = tkInterface then
   begin
-    PropIntf := FResolveIntf(TRttiInterfaceType(Prop.PropertyType).GUID, '');
+    PropIntf := FResolveIntf(TRttiInterfaceType(Prop.PropertyType).GUID);
     TValue.Make(@PropIntf, Prop.PropertyType.Handle, ValueIntf);
     Prop.SetValue(Instance, ValueIntf);
   end
