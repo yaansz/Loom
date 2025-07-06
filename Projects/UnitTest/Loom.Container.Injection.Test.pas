@@ -26,12 +26,25 @@ type
     function GetName: string;
   end;
 
-  TTestComponent = class
+  TTestFieldInjectComponent = class
   private
     [Autowired]
     FFieldService: TTestService;  // Field injection of class
     [Autowired]
     FFieldIntf: ITestService;     // Field injection of interface
+  end;
+
+  TTestPropertyInjectComponent = class
+  private
+    FFieldService: TTestService;  // Field injection of class
+    FFieldIntf: ITestService;     // Field injection of interface
+
+  public
+    [Autowired]
+    property FieldService : TTestService read FFieldService write FFieldService;
+
+    [Autowired]
+    property FieldIntf    : ITestService read FFieldIntf write FFieldIntf;
   end;
 
   TCircularB = class;
@@ -90,7 +103,8 @@ procedure TestContainerResolver.Setup;
 begin
   FRegistry := TContainerRegistry.Create;
   FRegistry.RegisterComponent(TTestService, TScope.Singleton);
-  FRegistry.RegisterComponent(TTestComponent, TScope.Prototype);
+  FRegistry.RegisterComponent(TTestFieldInjectComponent, TScope.Prototype);
+  FRegistry.RegisterComponent(TTestPropertyInjectComponent, TScope.Prototype);
   FRegistry.RegisterInterface(ITestService, TTestService, TScope.Singleton);
   FResolver := TContainerResolver.Create(FRegistry);
 end;
@@ -103,9 +117,9 @@ end;
 
 procedure TestContainerResolver.TestFieldInjection_Class;
 var
-  Component: TTestComponent;
+  Component: TTestFieldInjectComponent;
 begin
-  Component := FResolver.Resolve(TTestComponent) as TTestComponent;
+  Component := FResolver.Resolve(TTestFieldInjectComponent) as TTestFieldInjectComponent;
   try
     Assert.IsNotNull(Component.FFieldService, 'Field service (class) not injected');
     Assert.IsTrue(Component.FFieldService is TTestService, 'Incorrect type for field service');
@@ -116,12 +130,12 @@ end;
 
 procedure TestContainerResolver.TestFieldInjection_Interface;
 var
-  Component: TTestComponent;
+  Component: TTestFieldInjectComponent;
 begin
-  Component := FResolver.Resolve(TTestComponent) as TTestComponent;
+  Component := FResolver.Resolve(TTestFieldInjectComponent) as TTestFieldInjectComponent;
   try
     Assert.IsNotNull(Component.FFieldIntf, 'Field service (interface) not injected');
-    Assert.IsTrue(Component.FFieldIntf <> nil, 'Incorrect type for field interface');
+    Assert.IsTrue(Supports(Component.FFieldService, ITestService), 'Incorrect type for field interface');
   finally
     Component.Free;
   end;
@@ -129,14 +143,30 @@ end;
 
 [Test]
 procedure TestContainerResolver.TestPropertyInjection_Class;
+var
+  Component: TTestPropertyInjectComponent;
 begin
-
+  Component := FResolver.Resolve(TTestPropertyInjectComponent) as TTestPropertyInjectComponent;
+  try
+    Assert.IsNotNull(Component.FieldService, 'Field service (class) not injected');
+    Assert.IsTrue(Component.FieldService is TTestService, 'Incorrect type for field service');
+  finally
+    Component.Free;
+  end;
 end;
 
 [Test]
 procedure TestContainerResolver.TestPropertyInjection_Interface;
+var
+  Component: TTestPropertyInjectComponent;
 begin
-
+  Component := FResolver.Resolve(TTestPropertyInjectComponent) as TTestPropertyInjectComponent;
+  try
+    Assert.IsNotNull(Component.FieldIntf, 'Field service (class) not injected');
+    Assert.IsTrue(Supports(Component.FieldIntf, ITestService), 'Incorrect type for field service');
+  finally
+    Component.Free;
+  end;
 end;
 
 procedure TestContainerResolver.TestCircularDependencyDetection;
