@@ -352,12 +352,6 @@ begin
   var Container2 := LoomContainer.GetDefaultContainer;
 
   Assert.AreSame(Container1, Container2, 'Default container should be singleton');
-
-  LoomContainer.SetDefaultContainer(nil);
-  var Container3 := LoomContainer.GetDefaultContainer;
-
-  Assert.IsNotNull(Container3, 'New default container should be created');
-  Assert.AreNotSame(Container1, Container3, 'New container should be different instance');
 end;
 
 initialization

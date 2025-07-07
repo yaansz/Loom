@@ -30,7 +30,6 @@ type
 
     // Interface registration
     procedure RegisterInterface(const IID: TGUID; AClass: TClass; Scope: TScope = TScope.Singleton);
-    procedure RegisterInterfaceWithClass(const IID: TGUID; AClass: TClass; Scope: TScope = TScope.Singleton);
 
     // Resolution methods
     function Resolve<T: class>: T; overload;
@@ -46,7 +45,6 @@ type
     procedure AutoRegister(const UnitPattern: string);
 
     class function  GetDefaultContainer: LoomContainer;
-    class procedure SetDefaultContainer(Container: LoomContainer);
     class procedure ForceReferenceToClass(C: TClass);
   end;
 
@@ -84,11 +82,6 @@ begin
 end;
 
 procedure LoomContainer.RegisterInterface(const IID: TGUID; AClass: TClass; Scope: TScope);
-begin
-  FRegistry.RegisterInterface(IID, AClass, Scope);
-end;
-
-procedure LoomContainer.RegisterInterfaceWithClass(const IID: TGUID; AClass: TClass; Scope: TScope);
 begin
   FRegistry.RegisterInterface(IID, AClass, Scope);
 end;
@@ -143,11 +136,6 @@ begin
   if not Assigned(DefaultContainer) then
     DefaultContainer := LoomContainer.Create;
   Result := DefaultContainer;
-end;
-
-class procedure LoomContainer.SetDefaultContainer(Container: LoomContainer);
-begin
-  DefaultContainer := Container;
 end;
 
 class procedure LoomContainer.ForceReferenceToClass(C: TClass);

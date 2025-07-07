@@ -68,24 +68,8 @@ begin
 end;
 
 function TContainerRegistry.ClassImplementsInterface(AClass: TClass; const IID: TGUID): Boolean;
-var
-  RttiType : TRttiType;
-  IntfType : TRttiInterfaceType;
 begin
-  RttiType := FContext.GetType(AClass);
-
-  // Check if the class directly implements the interface
-  for IntfType in RttiType.AsInstance.GetImplementedInterfaces do
-  begin
-    if IntfType.GUID = IID then
-      Exit(True);
-  end;
-
-  // Check if any ancestor implements the interface
-  if RttiType.BaseType <> nil then
-    Result := ClassImplementsInterface(RttiType.BaseType.AsInstance.MetaclassType, IID)
-  else
-    Result := False;
+  Result := AClass.GetInterfaceEntry(IID) <> nil;
 end;
 
 function TContainerRegistry.CreateKey(const IID: TGUID): string;

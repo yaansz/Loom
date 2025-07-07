@@ -20,6 +20,8 @@ type
     FRegistry       : TContainerRegistry;
     FSingletons     : TDictionary<TClass, TObject>;
     FNonInterfaced  : TObjectDictionary<TClass, TObject>;
+    FInterfaced     : TList<IInterface>;
+
     FResolvingStack : TStack<TClass>;
     FResolvingSet   : TDictionary<TClass, Boolean>;
     FContext        : TRttiContext;
@@ -55,6 +57,7 @@ begin
   FResolvingStack := TStack<TClass>.Create;
   FResolvingSet   := TDictionary<TClass, Boolean>.Create;
   FNonInterfaced  := TObjectDictionary<TClass, TObject>.Create([doOwnsValues]);
+  FInterfaced     := TList<IInterface>.Create;
   FInjector       := TPropertyInjector.Create(Resolve, ResolveInterface, FContext);
 end;
 
@@ -64,6 +67,7 @@ begin
   FResolvingStack.Free;
   FSingletons.Free;
   FNonInterfaced.Free;
+  FInterfaced.Free;
   FInjector.Free;
   FContext.Free;
   inherited;
@@ -79,6 +83,7 @@ function TContainerResolver.Resolve(AClass: TClass): TObject;
 var
   Reg      : TComponentRegistration;
   Instance : TObject;
+  Intf     : IInterface;
 begin
   CheckCircularDependency(AClass);
   FResolvingStack.Push(AClass);
@@ -102,7 +107,9 @@ begin
           FSingletons.Add(AClass, Instance);
 
           if not (Instance is TInterfacedObject) then
-            FNonInterfaced.Add(AClass, Instance);
+            FNonInterfaced.Add(AClass, Instance)
+          else if (Instance is TInterfacedObject) and Supports(Instance, IInterface, Intf) then
+            FInterfaced.Add(Intf);
         end;
 
       Result := Instance;

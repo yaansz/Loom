@@ -44,10 +44,10 @@ type
 
   public
     [Autowired]
-    property FieldService : TTestService read FFieldService write FFieldService;
+    property FieldService : TTestService read FFieldService write SetFieldService;
 
     [Autowired]
-    property FieldIntf    : ITestService read FFieldIntf write FFieldIntf;
+    property FieldIntf    : ITestService read FFieldIntf write SetFieldIntf;
   end;
 
   TTestPropertyMethodInjectComponent = class
