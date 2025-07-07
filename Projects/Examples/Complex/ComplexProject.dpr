@@ -16,7 +16,8 @@ uses
   Loom.Container.DataTypes in '..\..\..\Source\Loom.Container.DataTypes.pas',
   Loom.Container.Registry in '..\..\..\Source\Loom.Container.Registry.pas',
   Loom.Container.Resolver in '..\..\..\Source\Loom.Container.Resolver.pas',
-  Loom.Container.Injector in '..\..\..\Source\Loom.Container.Injector.pas';
+  Loom.Container.Injector in '..\..\..\Source\Loom.Container.Injector.pas',
+  Loom.Container.Utils in '..\..\..\Source\Loom.Container.Utils.pas';
 
 begin
   try

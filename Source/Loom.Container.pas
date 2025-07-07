@@ -19,6 +19,7 @@ type
   private
     FRegistry: TContainerRegistry;
     FResolver: TContainerResolver;
+
   public
     constructor Create;
     destructor Destroy; override;
@@ -34,8 +35,12 @@ type
     // Resolution methods
     function Resolve<T: class>: T; overload;
     function Resolve(AClass: TClass): TObject; overload;
+
     function ResolveInterface(const IID: TGUID): IInterface; overload;
     function ResolveInterface<T: IInterface> : T; overload;
+
+    function ResolveQualifiedInterface(const IID: TGUID; Qualifiers: TArray<QualifierAttribute>): IInterface; overload;
+    function ResolveQualifiedInterface<T: IInterface>(Qualifiers: TArray<QualifierAttribute>): T; overload;
 
     // Auto Register
     procedure AutoRegister(const UnitPattern: string);
@@ -100,7 +105,7 @@ end;
 
 function LoomContainer.ResolveInterface(const IID: TGUID): IInterface;
 begin
-  Result := FResolver.ResolveInterface(IID);
+  Result := FResolver.ResolveInterface(IID, []);
 end;
 
 function LoomContainer.ResolveInterface<T> : T;
@@ -109,7 +114,22 @@ var
   IntfResult : IInterface;
 begin
   IID := GetTypeData(TypeInfo(T))^.Guid;
-  IntfResult := FResolver.ResolveInterface(IID);
+  IntfResult := FResolver.ResolveInterface(IID, []);
+  Supports(IntfResult, IID, Result);
+end;
+
+function LoomContainer.ResolveQualifiedInterface(const IID: TGUID; Qualifiers: TArray<QualifierAttribute>): IInterface;
+begin
+  Result := FResolver.ResolveInterface(IID, Qualifiers);
+end;
+
+function LoomContainer.ResolveQualifiedInterface<T>(Qualifiers: TArray<QualifierAttribute>): T;
+var
+  IID        : TGUID;
+  IntfResult : IInterface;
+begin
+  IID := GetTypeData(TypeInfo(T))^.Guid;
+  IntfResult := FResolver.ResolveInterface(IID, Qualifiers);
   Supports(IntfResult, IID, Result);
 end;
 

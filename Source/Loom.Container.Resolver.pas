@@ -7,6 +7,7 @@ uses
   System.TypInfo,
   System.SysUtils,
   System.Generics.Collections,
+  Loom.Attributes,
   Loom.Container.Registry,
   Loom.Container.Injector;
 
@@ -25,21 +26,23 @@ type
     FInjector       : TPropertyInjector;
 
     function  CreateInstanceWithAutowiring(AClass: TClass): TObject;
-    function  ResolveConstructorParameters(AClass: TClass; ConstructorMethod: TRttiMethod): TArray<TObject>;
+    function  ResolveConstructorParameters(AClass: TClass; ConstructorMethod: TRttiMethod): TArray<TValue>;
     procedure InjectProperties(Instance: TObject);
     procedure CheckCircularDependency(AClass: TClass);
+
+    function GetCandidates(Implementations : TList<TClass>; Qualifiers: TArray<QualifierAttribute>) : TArray<TClass>;
   public
     constructor Create(Registry: TContainerRegistry);
     destructor Destroy; override;
 
     function Resolve(AClass: TClass): TObject;
-    function ResolveInterface(const IID: TGUID): IInterface;
+    function ResolveInterface(const IID: TGUID; Qualifiers: TArray<QualifierAttribute>): IInterface;
   end;
 
 implementation
 
 uses
-  Loom.Attributes,
+  Loom.Container.Utils,
   Loom.Container.DataTypes;
 
 { TContainerResolver }
@@ -114,23 +117,78 @@ begin
   end;
 end;
 
-function TContainerResolver.ResolveInterface(const IID: TGUID): IInterface;
+function TContainerResolver.ResolveInterface(const IID: TGUID; Qualifiers: TArray<QualifierAttribute>): IInterface;
 var
-  Key      : string;
-  AClass   : TClass;
-  Instance : TObject;
+  Key             : String;
+  Implementations : TList<TClass>;
+  Instance        : TObject;
 begin
   Key := FRegistry.CreateKey(IID);
 
-  if not FRegistry.InterfaceRegistry.TryGetValue(Key, AClass) then
-    raise EContainerResolveException.CreateFmt('Interface not registered: %s',
-      [GUIDToString(IID)]);
+  if not FRegistry.InterfaceRegistry.TryGetValue(Key, Implementations) then
+    raise EContainerResolveException.CreateFmt('Interface not registered: %s', [GUIDToString(IID)]);
 
-  Instance := Resolve(AClass);
+  if Implementations.Count = 0 then
+    raise EContainerResolveException.CreateFmt('No implementations for interface %s', [GUIDToString(IID)]);
+
+  var Candidates := GetCandidates(Implementations, Qualifiers);
+
+  if Length(Candidates) = 0 then
+    raise EContainerResolveException.CreateFmt('No matching implementation for %s', [GUIDToString(IID)]);
+
+  if Length(Candidates) > 1 then
+    raise EContainerResolveException.CreateFmt('Multiple implementations for %s', [GUIDToString(IID)]);
+
+  Instance := Resolve(Candidates[0]);
 
   if not Supports(Instance, IID, Result) then
     raise EContainerResolveException.CreateFmt('Class %s does not implement interface %s',
-      [AClass.ClassName, GUIDToString(IID)]);
+      [Instance.ClassName, GUIDToString(IID)]);
+end;
+
+function TContainerResolver.GetCandidates(Implementations: TList<TClass>; Qualifiers: TArray<QualifierAttribute>): TArray<TClass>;
+var
+  Reg : TComponentRegistration;
+begin
+  Result         := [];
+  var Candidates := TList<TClass>.Create;
+
+  try
+    for var Candidate in Implementations do
+      begin
+        if not FRegistry.ClassRegistry.TryGetValue(Candidate, Reg) then
+          Continue;
+
+        var Matches := True;
+
+        for var Req in Qualifiers do
+        begin
+          var Found := False;
+
+          for var RegQual in Reg.Qualifiers do
+          begin
+            if RegQual.ClassType = Req.ClassType then
+            begin
+              Found := True;
+              Break;
+            end;
+          end;
+
+          if not Found then
+          begin
+            Matches := False;
+            Break;
+          end;
+      end;
+
+      if Matches then
+        Candidates.Add(Candidate);
+      end;
+
+    Result := Candidates.ToArray;
+  finally
+    Candidates.Free;
+  end;
 end;
 
 function TContainerResolver.CreateInstanceWithAutowiring(AClass: TClass): TObject;
@@ -139,9 +197,7 @@ var
   Constructors        : TArray<TRttiMethod>;
   Ctor                : TRttiMethod;
   SelectedConstructor : TRttiMethod;
-  Params              : TArray<TObject>;
-  ParamValues         : TArray<TValue>;
-  I                   : Integer;
+  Params              : TArray<TValue>;
 begin
   RttiType     := FContext.GetType(AClass);
   Constructors := RttiType.GetMethods;
@@ -154,8 +210,6 @@ begin
   begin
     if Ctor.IsConstructor and (Length(Ctor.GetParameters) > 0) then
     begin
-      // Test if we can resolve parameters
-      Params := ResolveConstructorParameters(AClass, Ctor);
       SelectedConstructor := Ctor;
       Break; // Exit loop when we find a valid constructor
     end;
@@ -188,26 +242,20 @@ begin
     // Resolve parameters for parameterized constructor
     Params := ResolveConstructorParameters(AClass, SelectedConstructor);
 
-    // Prepare parameter values
-    SetLength(ParamValues, Length(Params));
-    for I := 0 to High(Params) do
-      ParamValues[I] := TValue.From<TObject>(Params[I]);
-
     // Invoke constructor
-    Result := SelectedConstructor.Invoke(AClass, ParamValues).AsObject;
+    Result := SelectedConstructor.Invoke(AClass, Params).AsObject;
   end;
 
   if not Assigned(Result) then
     raise EContainerResolveException.CreateFmt('Constructor did not return a valid value for %s', [AClass.ClassName]);
 end;
 
-function TContainerResolver.ResolveConstructorParameters(AClass: TClass; ConstructorMethod: TRttiMethod): TArray<TObject>;
+function TContainerResolver.ResolveConstructorParameters(AClass: TClass;ConstructorMethod: TRttiMethod): TArray<TValue>;
 var
   Params           : TArray<TRttiParameter>;
   I                : Integer;
   ParamType        : TRttiType;
   InterfaceGUID    : TGUID;
-  ImplementerClass : TClass;
 begin
   Params := ConstructorMethod.GetParameters;
   SetLength(Result, Length(Params));
@@ -218,25 +266,24 @@ begin
 
     if ParamType.IsInstance then
     begin
-      // Class dependency
-      Result[I] := Resolve(ParamType.AsInstance.MetaclassType);
+      // Class dependency - resolve and store as object
+      Result[I] := TValue.From<TObject>(Resolve(ParamType.AsInstance.MetaclassType));
     end
     else if (ParamType.TypeKind = tkInterface) and
             (ParamType is TRttiInterfaceType) then
     begin
-      // Interface dependency
+      // Interface dependency - resolve and store as interface
       InterfaceGUID := TRttiInterfaceType(ParamType).GUID;
+      var ParamIntf := ResolveInterface(InterfaceGUID, TLoomUtils.GetQualifiers(Params[I].GetAttributes));
 
-      if not FRegistry.InterfaceRegistry.TryGetValue(FRegistry.CreateKey(InterfaceGUID), ImplementerClass) then
-        raise EContainerResolveException.CreateFmt('No implementation registered for interface %s',
-          [GUIDToString(InterfaceGUID)]);
-
-      Result[I] := Resolve(ImplementerClass);
+      TValue.Make(@ParamIntf, ParamType.Handle, Result[I]);
     end
     else
     begin
-      raise EContainerResolveException.CreateFmt('Unsupported parameter type in %s: %s',
-        [AClass.ClassName, ParamType.ToString]);
+      raise EContainerResolveException.CreateFmt(
+        'Unsupported parameter type in %s: %s',
+        [AClass.ClassName, ParamType.ToString]
+      );
     end;
   end;
 end;

@@ -97,6 +97,8 @@
         <DCCReference Include="Loom.Container.AutoRegister.Classes.pas"/>
         <DCCReference Include="Loom.Container.Injection.Test.pas"/>
         <DCCReference Include="..\..\Source\Loom.Container.Injector.pas"/>
+        <DCCReference Include="..\..\Source\Loom.Container.Utils.pas"/>
+        <DCCReference Include="Loom.Container.Qualifier.Tests.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

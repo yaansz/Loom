@@ -86,6 +86,7 @@
         <DCCReference Include="..\..\Source\Loom.Container.Registry.pas"/>
         <DCCReference Include="..\..\Source\Loom.Container.Resolver.pas"/>
         <DCCReference Include="..\..\Source\Loom.Container.Injector.pas"/>
+        <DCCReference Include="..\..\Source\Loom.Container.Utils.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

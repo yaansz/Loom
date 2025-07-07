@@ -12,7 +12,7 @@ type
   EContainerInvalidAutowire = class(Exception);
 
   TClassResolver = reference to function(AClass: TClass): TObject;
-  TIntfResolver  = reference to function(const IID: TGUID): IInterface;
+  TIntfResolver  = reference to function(const IID: TGUID; Qualifiers: TArray<QualifierAttribute>): IInterface;
 
   TPropertyInjector = class
   private
@@ -30,6 +30,9 @@ type
   end;
 
 implementation
+
+uses
+  Loom.Container.Utils;
 
 { TPropertyInjector }
 
@@ -72,8 +75,7 @@ begin
   end;
 end;
 
-procedure TPropertyInjector.HandleFieldInjection(Instance: TObject;
-  Field: TRttiField);
+procedure TPropertyInjector.HandleFieldInjection(Instance: TObject; Field: TRttiField);
 var
   PropValue: TObject;
   PropIntf: IInterface;
@@ -86,7 +88,7 @@ begin
   end
   else if Field.FieldType.TypeKind = tkInterface then
   begin
-    PropIntf := FResolveIntf(TRttiInterfaceType(Field.FieldType).GUID);
+    PropIntf := FResolveIntf(TRttiInterfaceType(Field.FieldType).GUID, TLoomUtils.GetQualifiers(Field.GetAttributes));
     TValue.Make(@PropIntf, Field.FieldType.Handle, ValueIntf);
     Field.SetValue(Instance, ValueIntf);
   end
@@ -110,7 +112,7 @@ begin
   end
   else if Prop.PropertyType.TypeKind = tkInterface then
   begin
-    PropIntf := FResolveIntf(TRttiInterfaceType(Prop.PropertyType).GUID);
+    PropIntf := FResolveIntf(TRttiInterfaceType(Prop.PropertyType).GUID, TLoomUtils.GetQualifiers(Prop.GetAttributes));
     TValue.Make(@PropIntf, Prop.PropertyType.Handle, ValueIntf);
     Prop.SetValue(Instance, ValueIntf);
   end

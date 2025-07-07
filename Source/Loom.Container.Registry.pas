@@ -21,9 +21,8 @@ type
   TContainerRegistry = class
   private
     FClassRegistry     : TDictionary<TClass, TComponentRegistration>;
-    FInterfaceRegistry : TDictionary<string, TClass>;
+    FInterfaceRegistry : TDictionary<string, TList<TClass>>;
     FContext           : TRttiContext;
-    Qualifiers         : TArray<QualifierAttribute>;
 
     procedure RegisterImplementedInterfaces(AClass: TClass; ImplementedInterfaces: TArray<TGUID>);
     function ClassImplementsInterface(AClass: TClass; const IID: TGUID): Boolean;
@@ -43,7 +42,7 @@ type
     procedure AutoRegister(const UnitPattern: string);
 
     property ClassRegistry: TDictionary<TClass, TComponentRegistration> read FClassRegistry;
-    property InterfaceRegistry: TDictionary<string, TClass> read FInterfaceRegistry;
+    property InterfaceRegistry: TDictionary<string, TList<TClass>> read FInterfaceRegistry;
   end;
 
 implementation
@@ -56,7 +55,7 @@ uses
 constructor TContainerRegistry.Create;
 begin
   FClassRegistry     := TDictionary<TClass, TComponentRegistration>.Create;
-  FInterfaceRegistry := TDictionary<string, TClass>.Create;
+  FInterfaceRegistry := TDictionary<string, TList<TClass>>.Create;
   FContext           := TRttiContext.Create;
 end;
 
@@ -176,7 +175,17 @@ begin
   if not FClassRegistry.ContainsKey(AClass) then
     RegisterComponent(AClass, Scope);
 
-  FInterfaceRegistry.AddOrSetValue(CreateKey(IID), AClass);
+  var Implementations: TList<TClass>;
+
+  if not FInterfaceRegistry.TryGetValue(IID.ToString, Implementations) then
+  begin
+    Implementations := TList<TClass>.Create;
+    FInterfaceRegistry.Add(IID.ToString, Implementations);
+  end;
+
+  // Add if not exists
+  if not Implementations.Contains(AClass) then
+    Implementations.Add(AClass);
 end;
 
 procedure TContainerRegistry.RegisterImplementedInterfaces(AClass: TClass; ImplementedInterfaces: TArray<TGUID>);

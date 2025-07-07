@@ -23,7 +23,9 @@ uses
   Loom.Container.AutoRegister.Tests in 'Loom.Container.AutoRegister.Tests.pas',
   Loom.Container.AutoRegister.Classes in 'Loom.Container.AutoRegister.Classes.pas',
   Loom.Container.Injection.Test in 'Loom.Container.Injection.Test.pas',
-  Loom.Container.Injector in '..\..\Source\Loom.Container.Injector.pas';
+  Loom.Container.Injector in '..\..\Source\Loom.Container.Injector.pas',
+  Loom.Container.Utils in '..\..\Source\Loom.Container.Utils.pas',
+  Loom.Container.Qualifier.Tests in 'Loom.Container.Qualifier.Tests.pas';
 
 { keep comment here to protect the following conditional from being removed by the IDE when adding a unit }
 {$IFNDEF TESTINSIGHT}

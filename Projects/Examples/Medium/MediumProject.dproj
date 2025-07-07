@@ -100,6 +100,7 @@
         <DCCReference Include="..\..\..\Source\Loom.Container.DataTypes.pas"/>
         <DCCReference Include="Example.Medium.Main.pas"/>
         <DCCReference Include="..\..\..\Source\Loom.Container.Injector.pas"/>
+        <DCCReference Include="..\..\..\Source\Loom.Container.Utils.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

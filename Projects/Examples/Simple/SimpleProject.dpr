@@ -11,7 +11,8 @@ uses
   Loom.Container in '..\..\..\Source\Loom.Container.pas',
   Loom.Container.Registry in '..\..\..\Source\Loom.Container.Registry.pas',
   Loom.Container.Resolver in '..\..\..\Source\Loom.Container.Resolver.pas',
-  Loom.Container.Injector in '..\..\..\Source\Loom.Container.Injector.pas';
+  Loom.Container.Injector in '..\..\..\Source\Loom.Container.Injector.pas',
+  Loom.Container.Utils in '..\..\..\Source\Loom.Container.Utils.pas';
 
 var
   Container: LoomContainer;
